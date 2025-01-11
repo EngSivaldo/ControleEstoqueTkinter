@@ -1,0 +1,17 @@
+Comandos SQL no SQL Server:
+
+# criar o banco de dados
+CREATE DATABASE EstoqueMentoria
+
+# adicionar tabela Insumos
+USE Estoque
+CREATE TABLE Insumos(
+	id_insumo int AUTO_INCREMENT,
+	nome_insumo varchar(50),
+	data_validade date,
+	lote int,
+	qtde decimal(10,2),
+	)
+
+# ver tabela Insumos
+SELECT * FROM Insumos
