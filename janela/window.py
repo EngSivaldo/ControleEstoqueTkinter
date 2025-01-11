@@ -18,12 +18,22 @@ def btn_clicked0():
     #buscar essa info do insumo no bd
     #colocar no entry0(caixa texto) as info do insumo do bd
 
+#Deletar insumo
 def btn_clicked1():
     print("Deletar insumo")
      #pegar a info no campo nome_insumo(entry1)
     nome_insumo = entry1.get()
      #buscar e deletar essa info do insumo no bd
      #exibir msg que deletou o insumo no bd 
+    # Deletar
+    comando = f"""DELETE from Insumos
+                WHERE nome_insumo = '{nome_insumo}';
+                """
+    cursor.execute(comando)
+    cursor.commit()
+    messagebox.showinfo(title="Aviso Insumo Excluido", message=f"{nome_insumo} foi excluido do banco de dados!")
+    print("Deletar insumo")
+ 
 
 #consumir insumo(registrar uso insumo)
 def btn_clicked2():
