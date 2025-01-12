@@ -16,10 +16,12 @@ def btn_clicked0():
         messagebox.showerror("Erro", "O campo nome do insumo está vazio.")
         return
     try:
-        comando = f"""SELECT * from Insumos WHERE nome_insumo = '{nome_insumo}';"""
-        cursor.execute(comando)
+        # Consulta SQL para buscar o insumo pelo nome
+        comando = "SELECT * from Insumos WHERE nome_insumo = ?;"
+        cursor.execute(comando, (nome_insumo,))
         entry0.delete('1.0', END)
         for linha in cursor.fetchall():
+            # Formata e exibe os dados do insumo encontrado
             texto = f"Item: {linha.nome_insumo}\n Quantidade: {linha.qtde}\n Lote:{linha.lote}\n Validade:{linha.data_validade}\n"
             entry0.insert("1.0", texto)
     except pyodbc.Error as e:
@@ -32,16 +34,18 @@ def btn_clicked1():
         messagebox.showerror("Erro", "O campo nome do insumo está vazio.")
         return
     try:
-        comando = f"""SELECT qtde from Insumos WHERE nome_insumo = '{nome_insumo}';"""
-        cursor.execute(comando)
+        # Verifica se o insumo existe e tem quantidade maior que zero
+        comando = "SELECT qtde from Insumos WHERE nome_insumo = ?;"
+        cursor.execute(comando, (nome_insumo,))
         resultado = cursor.fetchone()
         if resultado and resultado.qtde > 0:
-            comando = f"""DELETE from Insumos WHERE nome_insumo = '{nome_insumo}';"""
-            cursor.execute(comando)
-            cursor.commit()
+            # Deleta o insumo do banco de dados
+            comando = "DELETE from Insumos WHERE nome_insumo = ?;"
+            cursor.execute(comando, (nome_insumo,))
+            conexao.commit()
             messagebox.showinfo("Aviso", f"{nome_insumo} foi excluido do banco de dados!")
         else:
-            messagebox.showerror("Erro", "Não é possível excluir um insumo com quantidade zero.")
+            messagebox.showerror("Erro", "Não é possível excluir um insumo com quantidade zero ou inexistente.")
     except pyodbc.Error as e:
         messagebox.showerror("Erro", f"Erro ao deletar dados: {e}")
 
@@ -54,13 +58,15 @@ def btn_clicked2():
         return
     try:
         qtde_usada = int(qtde_usada)
-        comando = f"""SELECT qtde from Insumos WHERE nome_insumo = '{nome_insumo}';"""
-        cursor.execute(comando)
+        # Verifica se há quantidade suficiente do insumo no estoque
+        comando = "SELECT qtde from Insumos WHERE nome_insumo = ?;"
+        cursor.execute(comando, (nome_insumo,))
         resultado = cursor.fetchone()
         if resultado and resultado.qtde >= qtde_usada:
-            comando = f"""UPDATE Insumos SET qtde = qtde - {qtde_usada} WHERE nome_insumo = '{nome_insumo}';"""
-            cursor.execute(comando)
-            cursor.commit()
+            # Atualiza a quantidade do insumo no banco de dados
+            comando = "UPDATE Insumos SET qtde = qtde - ? WHERE nome_insumo = ?;"
+            cursor.execute(comando, (qtde_usada, nome_insumo))
+            conexao.commit()
             messagebox.showinfo("Aviso", f"{qtde_usada} unidades do {nome_insumo} foram usadas")
         else:
             messagebox.showerror("Erro", "Quantidade insuficiente no estoque.")
@@ -75,26 +81,33 @@ def btn_clicked3():
     data_validade = entry2.get()
     lote = entry3.get()
     qtde = entry4.get()
-    if not nome_insumo or not data_validade or not lote or not qtde:
+    if not nome_insumo or not data_validade or not lote ou not qtde:
         messagebox.showerror("Erro", "Todos os campos devem ser preenchidos.")
         return
     try:
         qtde = int(qtde)
-        comando = f"""SELECT * from Insumos WHERE nome_insumo = '{nome_insumo}';"""
-        cursor.execute(comando)
+        # Verifica se o insumo já existe no banco de dados
+        comando = "SELECT * from Insumos WHERE nome_insumo = ?;"
+        cursor.execute(comando, (nome_insumo,))
         resultado = cursor.fetchone()
         if resultado:
             messagebox.showerror("Erro", "O insumo já existe no banco de dados.")
         else:
-            comando = f"""INSERT INTO Insumos(nome_insumo, data_validade, lote, qtde)
-                          VALUES ('{nome_insumo}', '{data_validade}', '{lote}', {qtde})"""
-            cursor.execute(comando)
-            cursor.commit()
+            # Insere o novo insumo no banco de dados
+            comando = "INSERT INTO Insumos(nome_insumo, data_validade, lote, qtde) VALUES (?, ?, ?, ?)"
+            cursor.execute(comando, (nome_insumo, data_validade, lote, qtde))
+            conexao.commit()
             messagebox.showinfo("Aviso", "Produto adicionado com sucesso")
     except ValueError:
         messagebox.showerror("Erro", "A quantidade deve ser um número inteiro.")
     except pyodbc.Error as e:
         messagebox.showerror("Erro", f"Erro ao adicionar dados: {e}")
+
+# Fechar a conexão ao sair
+def on_closing():
+    cursor.close()
+    conexao.close()
+    window.destroy()
 
 window = Tk()
 window.geometry("711x646")
@@ -151,5 +164,7 @@ entry4_bg = canvas.create_image(517.0, 436.5, image=entry4_img)
 entry4 = Entry(bd=0, bg="#ffffff", highlightthickness=0)
 entry4.place(x=377, y=420, width=280, height=31)
 
+# Configura o fechamento da janela para garantir que a conexão com o banco de dados seja fechada corretamente
+window.protocol("WM_DELETE_WINDOW", on_closing)
 window.resizable(False, False)
 window.mainloop()
